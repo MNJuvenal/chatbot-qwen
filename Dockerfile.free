@@ -1,0 +1,38 @@
+# Dockerfile pour Render (Version Free Plan - Sans llama-cpp)
+FROM python:3.12-slim
+
+# Variables d'environnement (backend Transformers pour Free plan)
+ENV PYTHONUNBUFFERED=1
+ENV BACKEND=transformers
+ENV RAG_ENABLED=true
+ENV MODEL_ID=Qwen/Qwen2.5-0.5B-Instruct
+ENV PORT=10000
+
+# Installer les dépendances système minimales
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Répertoire de travail
+WORKDIR /app
+
+# Copier les requirements en premier pour le cache Docker
+COPY backend/requirements-transformers.txt ./requirements.txt
+
+# Installer les dépendances Python (sans llama-cpp-python)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copier le reste de l'application
+COPY backend/ ./
+COPY frontend/ ../frontend/
+
+# Créer les répertoires nécessaires
+RUN mkdir -p models admin_ui
+
+# Exposer le port
+EXPOSE $PORT
+
+# Script de démarrage (pas de téléchargement de modèle GGUF)
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port $PORT"]

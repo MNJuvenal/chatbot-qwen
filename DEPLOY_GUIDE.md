@@ -1,22 +1,29 @@
 # Guide de Déploiement Render - Chatbot Qwen
 
-## Étapes de déploiement
+## Options de déploiement
 
-### 1. Créer un nouveau Web Service sur Render
+### Option 1: Plan Starter avec llama-cpp (Recommandée)
 
-1. Aller sur [render.com](https://render.com)
-2. Cliquer sur "New +" → "Web Service"
-3. Connecter votre repository GitHub : `MNJuvenal/chatbot-qwen`
+**Avantages :** Plus rapide, modèles GGUF optimisés
+**Coût :** $7/mois
 
-### 2. Configuration du service
+### Option 2: Plan Free avec Transformers
 
-**Paramètres principaux :**
-- **Name** : `qwen-chatbot` (ou nom de votre choix)
+**Avantages :** Gratuit
+**Limitations :** Plus lent, mémoire limitée
+
+---
+
+## Déploiement Plan Starter (llama-cpp)
+
+### 1. Configuration sur Render
+
+**Paramètres :**
 - **Runtime** : `Docker`
-- **Plan** : `Starter` ($7/mois - requis pour 1GB RAM)
-- **Branch** : `main`
+- **Plan** : `Starter`
+- **Dockerfile** : `Dockerfile` (par défaut)
 
-**Variables d'environnement à ajouter :**
+**Variables d'environnement :**
 ```
 BACKEND=llama_cpp
 RAG_ENABLED=true
@@ -26,7 +33,31 @@ MAX_NEW_TOKENS=192
 TEMPERATURE=0.7
 ```
 
-### 3. Déploiement
+### 2. Temps de build
+- **Durée** : 15-20 minutes (compilation llama-cpp + téléchargement modèle)
+- **RAM utilisée** : ~800MB
+
+---
+
+## Déploiement Plan Free (Transformers)
+
+### 1. Utiliser Dockerfile alternatif
+
+Sur Render, dans les paramètres avancés :
+- **Docker Command** : `docker build -f Dockerfile.free .`
+
+**Variables d'environnement :**
+```
+BACKEND=transformers
+RAG_ENABLED=true
+MODEL_ID=Qwen/Qwen2.5-0.5B-Instruct
+RAG_MODEL=Alibaba-NLP/gte-multilingual-base
+```
+
+### 2. Limitations
+- **RAM** : 512MB (limite Free)
+- **Performance** : Plus lent que llama-cpp
+- **Pas de modèles GGUF** : Utilise Transformers standard
 
 1. Cliquer sur "Create Web Service"
 2. Le build va démarrer automatiquement

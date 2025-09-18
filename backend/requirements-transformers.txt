@@ -5,8 +5,6 @@ transformers>=4.41.0
 torch>=2.0.0
 accelerate>=0.33.0
 sentencepiece
-# llama-cpp-python avec wheels pré-compilés (plus rapide)
-llama-cpp-python>=0.2.86 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 sentence-transformers>=2.2.0
 faiss-cpu>=1.7.0
 numpy>=1.21.0
