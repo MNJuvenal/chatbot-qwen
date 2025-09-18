@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: qwen-chatbot
+    runtime: python3
+    plan: starter
+    rootDir: ./backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python download_model_render.py && uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: BACKEND
+        value: llama_cpp
+      - key: RAG_ENABLED
+        value: "true"
+      - key: GGUF_PATH
+        value: "./models/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+      - key: RAG_MODEL
+        value: "Alibaba-NLP/gte-multilingual-base"
+      - key: MAX_NEW_TOKENS
+        value: "192"
+      - key: TEMPERATURE
+        value: "0.7"
+      - key: PYTHON_VERSION
+        value: "3.12.3"

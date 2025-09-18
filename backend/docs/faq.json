@@ -1,0 +1,30 @@
+[
+    {
+        "question": "Qu'est-ce que Qwen ?",
+        "answer": "Qwen est une série de modèles de langage développés par Alibaba Cloud. Il s'agit de modèles multilingues capables de comprendre et générer du texte en plusieurs langues, dont le français et le chinois. Le modèle Qwen2.5-0.5B-Instruct est optimisé pour les conversations et fonctionne efficacement sur CPU."
+    },
+    {
+        "question": "Comment utiliser ce chatbot ?",
+        "answer": "Pour utiliser ce chatbot : 1) Assurez-vous que le backend est lancé sur le port 8000, 2) Ouvrez l'interface web sur localhost:5500, 3) Tapez votre question dans la zone de texte, 4) Ajustez les paramètres (tokens, température) si nécessaire, 5) Cliquez sur Envoyer ou appuyez sur Entrée."
+    },
+    {
+        "question": "Quels sont les paramètres configurables ?",
+        "answer": "Les paramètres configurables sont : Max tokens (16-1024, défaut 192) qui contrôle la longueur des réponses, Temperature (0-2, défaut 0.7) qui contrôle la créativité, Top-p (0-1, défaut 0.95) qui contrôle la diversité du vocabulaire, et Repetition penalty (défaut 1.1) qui évite les répétitions."
+    },
+    {
+        "question": "Comment ajouter des documents à la base de connaissances ?",
+        "answer": "Pour ajouter des documents : 1) Placez vos fichiers .txt ou .md dans le dossier backend/docs/, 2) Modifiez le fichier faq.json pour ajouter des questions-réponses, 3) Relancez le serveur ou appelez l'endpoint /rag/rebuild pour reconstruire l'index. Le système indexera automatiquement tous les nouveaux documents."
+    },
+    {
+        "question": "Que faire en cas d'erreur ?",
+        "answer": "En cas d'erreur : 1) Vérifiez que tous les services sont lancés (backend port 8000, frontend port 5500), 2) Contrôlez les logs du terminal pour identifier l'erreur, 3) Assurez-vous que toutes les dépendances sont installées, 4) Redémarrez les serveurs si nécessaire. Les erreurs courantes sont souvent liées aux ports occupés ou aux dépendances manquantes."
+    },
+    {
+        "question": "Comment optimiser les performances ?",
+        "answer": "Pour optimiser les performances : 1) Utilisez le backend llama.cpp avec des modèles GGUF quantifiés, 2) Ajustez MAX_NEW_TOKENS pour des réponses plus courtes, 3) Réduisez la température pour des réponses plus déterministes, 4) Limitez la taille du contexte RAG pour accélérer la recherche."
+    },
+    {
+        "question": "Le système fonctionne-t-il hors ligne ?",
+        "answer": "Oui, une fois les modèles téléchargés, le système fonctionne complètement hors ligne. Le modèle Qwen est stocké localement, l'index RAG est sauvegardé sur disque, et aucune connexion internet n'est requise pour les conversations. Seul le téléchargement initial des modèles nécessite une connexion."
+    }
+]

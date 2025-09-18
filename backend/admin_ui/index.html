@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration RAG - Chatbot Qwen</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+        }
+        
+        .card-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .card-body {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76,175,80,0.1);
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76,175,80,0.3);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #da190b);
+        }
+        
+        .btn-info {
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+        }
+        
+        .file-upload {
+            border: 2px dashed #4CAF50;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            background: #f8fff8;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload:hover {
+            background: #f0fff0;
+        }
+        
+        .file-upload.dragover {
+            border-color: #2e7d2e;
+            background: #e8f5e8;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .documents-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .document-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .document-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .document-item:last-child {
+            border-bottom: none;
+        }
+        
+        .document-meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .document-preview {
+            font-size: 0.9rem;
+            color: #333;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card-body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Administration RAG</h1>
+            <p>Gérez vos documents et FAQ pour le chatbot Qwen</p>
+        </div>
+
+        <div id="status-display"></div>
+
+        <div class="grid">
+            <!-- Upload de documents -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📄 Upload de Documents</h2>
+                    <p>Formats supportés: .txt, .md</p>
+                </div>
+                <div class="card-body">
+                    <div class="file-upload" id="file-drop-zone">
+                        <input type="file" id="file-input" accept=".txt,.md" style="display: none;" multiple>
+                        <div>
+                            <h3>Glissez vos fichiers ici</h3>
+                            <p>ou <strong>cliquez pour parcourir</strong></p>
+                            <p style="color: #666; font-size: 0.9rem;">Formats: .txt, .md</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button class="btn" onclick="uploadDocuments()" id="upload-docs-btn">
+                            📤 Upload Documents
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ajout FAQ simple -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>❓ Ajouter une FAQ</h2>
+                    <p>Ajout rapide d'une question-réponse</p>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="faq-question">Question</label>
+                        <input type="text" id="faq-question" class="form-control" 
+                               placeholder="Comment utiliser le chatbot ?">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="faq-answer">Réponse</label>
+                        <textarea id="faq-answer" class="form-control" 
+                                  placeholder="Pour utiliser le chatbot..."></textarea>
+                    </div>
+                    
+                    <button class="btn" onclick="addSingleFAQ()" id="add-faq-btn">
+                        ➕ Ajouter FAQ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload FAQ en batch -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Upload FAQ en Batch</h2>
+                    <p>Format JSON avec tableau de {question, answer}</p>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="faq-json">Format JSON</label>
+                        <textarea id="faq-json" class="form-control" rows="8"
+                                  placeholder='[
+  {"question": "Première question ?", "answer": "Première réponse"},
+  {"question": "Deuxième question ?", "answer": "Deuxième réponse"}
+]'></textarea>
+                    </div>
+                    
+                    <button class="btn" onclick="uploadFAQBatch()" id="upload-faq-btn">
+                        📤 Upload FAQ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statut et gestion -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Statut du Système</h2>
+                    <p>Informations et actions sur l'index RAG</p>
+                </div>
+                <div class="card-body">
+                    <div id="rag-status">
+                        <div class="status info">
+                            <span id="loading-status">Chargement du statut...</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-info" onclick="refreshStatus()">
+                            Actualiser
+                        </button>
+                        <button class="btn btn-info" onclick="reindexAll()">
+                            Ré-indexer Tout
+                        </button>
+                        <button class="btn btn-danger" onclick="clearAllDocuments()">
+                            Vider l'Index
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des documents -->
+            <div class="card" style="grid-column: 1 / -1;">
+                <div class="card-header">
+                    <h2>📚 Documents Indexés</h2>
+                    <p>Liste de tous les documents dans l'index RAG</p>
+                </div>
+                <div class="card-body">
+                    <div id="documents-list">
+                        <div class="status info">
+                            Chargement des documents...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration API
+        const API_BASE = window.location.origin.replace(/:\d+$/, ':8000');
+        
+        // Variables globales
+        let selectedFiles = [];
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFileUpload();
+            refreshStatus();
+            refreshDocuments();
+        });
+        
+        // Configuration du drag & drop
+        function setupFileUpload() {
+            const dropZone = document.getElementById('file-drop-zone');
+            const fileInput = document.getElementById('file-input');
+            
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files);
+                handleFileSelection(files);
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                handleFileSelection(files);
+            });
+        }
+        
+        // Gestion des fichiers sélectionnés
+        function handleFileSelection(files) {
+            const validFiles = files.filter(file => 
+                file.name.endsWith('.txt') || file.name.endsWith('.md')
+            );
+            
+            if (validFiles.length !== files.length) {
+                showStatus('Certains fichiers ignorés (formats autorisés: .txt, .md)', 'error');
+            }
+            
+            selectedFiles = validFiles;
+            
+            if (selectedFiles.length > 0) {
+                const fileNames = selectedFiles.map(f => f.name).join(', ');
+                showStatus(`${selectedFiles.length} fichier(s) sélectionné(s): ${fileNames}`, 'info');
+            }
+        }
+        
+        // Upload des documents
+        async function uploadDocuments() {
+            if (selectedFiles.length === 0) {
+                showStatus('Aucun fichier sélectionné', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('upload-docs-btn');
+            btn.disabled = true;
+            btn.innerHTML = '📤 Upload en cours... <span class="loading"></span>';
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const file of selectedFiles) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const response = await fetch(`${API_BASE}/upload/document`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        const error = await response.json();
+                        console.error(`Erreur pour ${file.name}:`, error);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    console.error(`Erreur pour ${file.name}:`, error);
+                }
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '📤 Upload Documents';
+            
+            if (successCount > 0) {
+                showStatus(`${successCount} document(s) uploadé(s) avec succès`, 'success');
+                selectedFiles = [];
+                document.getElementById('file-input').value = '';
+                refreshStatus();
+                refreshDocuments();
+            }
+            
+            if (errorCount > 0) {
+                showStatus(`${errorCount} erreur(s) lors de l'upload`, 'error');
+            }
+        }
+        
+        // Ajouter une FAQ simple
+        async function addSingleFAQ() {
+            const question = document.getElementById('faq-question').value.trim();
+            const answer = document.getElementById('faq-answer').value.trim();
+            
+            if (!question || !answer) {
+                showStatus('Veuillez remplir la question et la réponse', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('add-faq-btn');
+            btn.disabled = true;
+            btn.innerHTML = '➕ Ajout en cours... <span class="loading"></span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/upload/faq_single`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        question: question,
+                        answer: answer
+                    })
+                });
+                
+                if (response.ok) {
+                    showStatus('FAQ ajoutée avec succès', 'success');
+                    document.getElementById('faq-question').value = '';
+                    document.getElementById('faq-answer').value = '';
+                    refreshStatus();
+                    refreshDocuments();
+                } else {
+                    const error = await response.json();
+                    showStatus(`Erreur: ${error.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Erreur de connexion: ${error.message}`, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '➕ Ajouter FAQ';
+        }
+        
+        // Upload FAQ en batch
+        async function uploadFAQBatch() {
+            const jsonData = document.getElementById('faq-json').value.trim();
+            
+            if (!jsonData) {
+                showStatus('Veuillez saisir les données JSON', 'error');
+                return;
+            }
+            
+            // Validation JSON
+            let parsed;
+            try {
+                parsed = JSON.parse(jsonData);
+                if (!Array.isArray(parsed)) {
+                    throw new Error('Le JSON doit être un tableau');
+                }
+            } catch (error) {
+                showStatus(`JSON invalide: ${error.message}`, 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('upload-faq-btn');
+            btn.disabled = true;
+            btn.innerHTML = '📤 Upload en cours... <span class="loading"></span>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/upload/faq`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        faq_items: parsed
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showStatus(`${result.count} FAQ ajoutées avec succès`, 'success');
+                    document.getElementById('faq-json').value = '';
+                    refreshStatus();
+                    refreshDocuments();
+                } else {
+                    const error = await response.json();
+                    showStatus(`Erreur: ${error.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Erreur de connexion: ${error.message}`, 'error');
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '📤 Upload FAQ';
+        }
+        
+        // Actualiser le statut RAG
+        async function refreshStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/rag/status`);
+                const status = await response.json();
+                
+                const statusDiv = document.getElementById('rag-status');
+                
+                if (status.enabled) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            RAG Activé<br>
+                            📚 Documents: ${status.documents}<br>
+                            🤖 Modèle: ${status.model}<br>
+                            Index: ${status.index_size} éléments
+                        </div>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            RAG Désactivé
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('rag-status').innerHTML = `
+                    <div class="status error">
+                        Erreur de connexion: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Actualiser la liste des documents
+        async function refreshDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/rag/documents`);
+                const data = await response.json();
+                
+                const docsDiv = document.getElementById('documents-list');
+                
+                if (data.documents && data.documents.length > 0) {
+                    docsDiv.innerHTML = `
+                        <div class="documents-list">
+                            ${data.documents.map(doc => `
+                                <div class="document-item">
+                                    <div class="document-meta">
+                                        <strong>${doc.doc_id}</strong> • 
+                                        Type: ${doc.type} • 
+                                        Source: ${doc.source}
+                                    </div>
+                                    <div class="document-preview">
+                                        ${doc.preview}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    docsDiv.innerHTML = `
+                        <div class="status info">
+                            📭 Aucun document indexé
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('documents-list').innerHTML = `
+                    <div class="status error">
+                        Erreur de chargement: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Ré-indexer tous les documents
+        async function reindexAll() {
+            if (!confirm('Voulez-vous vraiment ré-indexer tous les documents ?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/rag/reindex`, { method: 'POST' });
+                
+                if (response.ok) {
+                    showStatus('Ré-indexation terminée', 'success');
+                    refreshStatus();
+                    refreshDocuments();
+                } else {
+                    const error = await response.json();
+                    showStatus(`Erreur: ${error.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Erreur: ${error.message}`, 'error');
+            }
+        }
+        
+        // Vider tous les documents
+        async function clearAllDocuments() {
+            if (!confirm('⚠️ ATTENTION: Cela va supprimer TOUS les documents indexés. Continuer ?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/rag/clear`, { method: 'DELETE' });
+                
+                if (response.ok) {
+                    showStatus('Tous les documents ont été supprimés', 'success');
+                    refreshStatus();
+                    refreshDocuments();
+                } else {
+                    const error = await response.json();
+                    showStatus(`Erreur: ${error.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Erreur: ${error.message}`, 'error');
+            }
+        }
+        
+        // Afficher un message de statut
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status-display');
+            statusDiv.innerHTML = `
+                <div class="status ${type}">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto-masquer après 5 secondes
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

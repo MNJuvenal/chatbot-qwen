@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chatbot Qwen (CPU)</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#0b0f14;color:#e7edf3;margin:0}
+    .app{max-width:900px;margin:0 auto;padding:24px}
+    .card{background:#111823;border:1px solid #1c2633;border-radius:16px;padding:16px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+    .chat{display:flex;flex-direction:column;gap:12px;height:60vh;overflow:auto;padding:8px;border-radius:12px;background:#0e141d;border:1px solid #1c2633}
+    .msg{padding:12px 14px;border-radius:12px;max-width:80%;line-height:1.45}
+    .user{align-self:flex-end;background:#1f3b78}
+    .bot{align-self:flex-start;background:#15202b;border:1px solid #233247}
+    .input{display:flex;gap:8px;margin-top:12px}
+    textarea{flex:1;resize:vertical;min-height:54px;border-radius:12px;border:1px solid #233247;background:#0e141d;color:#e7edf3;padding:12px}
+    button{border-radius:12px;border:1px solid #233247;background:#172231;color:#e7edf3;padding:10px 14px;cursor:pointer}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+    .tiny{opacity:.7;font-size:12px}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid #e7edf3;border-right-color:transparent;border-radius:50%;animation:spin .9s linear infinite;vertical-align:middle;margin-left:6px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>JUVENAL-Chatbot Qwen (CPU)</h1>
+  <div class="card">
+    <div class="controls">
+      <label>Max tokens <input id="maxNew" type="number" value="192" min="16" max="1024" style="width:90px"></label>
+      <label>Temp <input id="temp" type="number" step="0.05" value="0.7" min="0" max="2" style="width:80px"></label>
+      <label style="display:flex;align-items:center;gap:5px;">
+        <input id="ragEnabled" type="checkbox" checked> RAG (Docs/FAQ)
+      </label>
+      <button id="reset">Réinitialiser</button>
+    </div>
+    <div id="chat" class="chat"></div>
+    <div class="input">
+      <textarea id="input" placeholder="Pose ta question... (Maj+Entrée = saut de ligne)"></textarea>
+      <button id="send">Envoyer</button>
+    </div>
+  </div>
+  <p class="tiny">Frontend → <code>POST /chat</code> (backend FastAPI). 
+    <a href="http://localhost:8000/admin" target="_blank" style="color: #4CAF50; text-decoration: none;">
+      Interface d'Administration RAG
+    </a>
+  </p>
+</div>
+<script>
+const chatEl = document.getElementById('chat');
+const inputEl = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+const resetBtn = document.getElementById('reset');
+const maxNewEl = document.getElementById('maxNew');
+const tempEl = document.getElementById('temp');
+const ragEnabledEl = document.getElementById('ragEnabled');
+
+let history = [];
+const endpoint = (path) => `${location.origin.replace(/:\d+$/, ':8000')}${path}`; // si backend sur 8000
+
+function addMsg(text, who){
+  const div = document.createElement('div');
+  div.className = 'msg ' + (who === 'user' ? 'user' : 'bot');
+  div.textContent = text;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+async function send(){
+  const text = inputEl.value.trim();
+  if(!text) return;
+  addMsg(text, 'user');
+  inputEl.value = '';
+  sendBtn.disabled = true; sendBtn.innerHTML = 'Génération <span class="spinner"></span>';
+
+  try{
+    const payload = {
+      messages: [
+        {role:'system', content:'Tu es un assistant utile et concis. Réponds en français.'},
+        ...history.flatMap(t => ([{role:'user', content:t.user},{role:'assistant', content:t.bot}])),
+        {role:'user', content:text}
+      ],
+      max_new_tokens: Number(maxNewEl.value||192),
+      temperature: Number(tempEl.value||0.7),
+      use_rag: ragEnabledEl.checked  // ✅ Utiliser l'état de la checkbox RAG
+    };
+    const res = await fetch(endpoint('/chat'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    const reply = data.reply || '(pas de réponse)';
+    addMsg(reply, 'bot');
+    history.push({user:text, bot:reply});
+  }catch(e){
+    console.error(e);
+    addMsg('Erreur: '+e.message, 'bot');
+  }finally{
+    sendBtn.disabled = false; sendBtn.textContent = 'Envoyer';
+  }
+}
+
+sendBtn.addEventListener('click', send);
+inputEl.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); }});
+resetBtn.addEventListener('click', ()=>{ history=[]; chatEl.innerHTML=''; addMsg('Historique réinitialisé. Que puis-je faire pour vous ?', 'bot');});
+
+addMsg('Bonjour ! Posez votre question pour démarrer 😄', 'bot');
+</script>
+</body>
+</html>
