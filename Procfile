@@ -1,1 +1,0 @@
-web: cd backend && python download_model_render.py && uvicorn app:app --host 0.0.0.0 --port $PORT
