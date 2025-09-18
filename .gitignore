@@ -61,3 +61,7 @@ logs/
 # Local development
 start_llama.sh
 test_*.py
+render.yaml
+
+# Docker
+.dockerignore
