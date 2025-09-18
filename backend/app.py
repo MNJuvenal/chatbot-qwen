@@ -42,19 +42,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Servir les fichiers statiques pour l'interface d'admin
-try:
-    app.mount("/admin", StaticFiles(directory="admin_ui", html=True), name="admin")
-except RuntimeError:
-    print("[Info] Dossier admin_ui non trouvé, interface d'admin non disponible")
-
-# Servir le frontend depuis le backend (pour déploiement unifié)
-try:
-    app.mount("/", StaticFiles(directory="../frontend", html=True), name="frontend")
-    print("[Info] Frontend servi depuis /")
-except RuntimeError:
-    print("[Info] Frontend non trouvé, API seule disponible")
-
 # =================== I/O Schemas ===================
 class Message(BaseModel):
     role: Literal["system", "user", "assistant"]
@@ -183,9 +170,33 @@ if RAG_ENABLED:
 
 # =================== Routes ===================
 
-@app.get("/")
-def root():
-    """Page d'accueil - redirect vers le frontend"""
+@app.get("/", response_class=HTMLResponse)
+def get_frontend():
+    """Servir la page d'accueil du chat"""
+    try:
+        with open("../frontend/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>Frontend non trouvé</h1><p>API disponible sur <a href='/docs'>/docs</a></p>",
+            status_code=404
+        )
+
+@app.get("/admin", response_class=HTMLResponse)
+def get_admin():
+    """Servir l'interface d'administration"""
+    try:
+        with open("admin_ui/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>Interface admin non trouvée</h1><p>API disponible sur <a href='/docs'>/docs</a></p>",
+            status_code=404
+        )
+
+@app.get("/api")
+def api_info():
+    """Informations sur l'API"""
     return {"message": "Chatbot Qwen API", "frontend": "/", "admin": "/admin", "docs": "/docs"}
 
 @app.get("/health")

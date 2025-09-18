@@ -20,6 +20,35 @@ python -m http.server 5500
 # Ouvrez http://localhost:5500
 ```
 
+## Démarrage rapide avec llama.cpp (Recommandé - Plus rapide)
+
+**Option 1: Script automatique**
+```bash
+# Démarrage en une commande avec le script start_llama.sh
+./start_llama.sh
+```
+
+Le script `start_llama.sh` configure automatiquement :
+- Backend: `llama_cpp` (plus rapide que transformers)
+- RAG activé pour la recherche documentaire
+- Modèle GGUF: `qwen2.5-0.5b-instruct-q4_k_m.gguf`
+- Serveur sur `http://localhost:8000`
+- Interface chat directement accessible sur `/`
+- Interface admin sur `/admin`
+
+**Option 2: Manuel**
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export BACKEND=llama_cpp
+export RAG_ENABLED=true
+export GGUF_PATH="./models/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+Puis ouvrez `http://localhost:8000` dans votre navigateur.
+
 ## Configuration
 - `.env` (backend) :
 ```
@@ -31,6 +60,12 @@ TOP_P=0.95
 REPETITION_PENALTY=1.1
 ```
 - Pour **llama.cpp** (option CPU rapide), mettez `BACKEND=llama_cpp` et `GGUF_PATH` vers un fichier `.gguf`.
+
+**Avantages de llama.cpp :**
+- ⚡ Plus rapide que transformers sur CPU
+- 💾 Utilise moins de mémoire RAM
+- 🔧 Modèles GGUF quantifiés (Q4_K_M recommandé)
+- 🚀 Démarrage plus rapide avec `./start_llama.sh`
 
 ## Test API
 ```bash
